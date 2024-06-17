@@ -9,19 +9,45 @@
 #include <file.h>
 #include <terminal.h>
 
+/* GNU/POSIX compliant argument parsing utility for CUT
+ * https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html
+ */
+
 #define TYPENAME Args
 
-#define VERSION(MAJOR, MINOR) \
-int _VERSION_MAJOR = MAJOR;\
-int _VERSION_MINOR = MINOR
+#define END_OPTION { NULL, ' ', "", ARG_TYPE_NONE, NULL }
+
+// '+' Required parameter
+// '-' Optional paramters (must be last)
+// '*' Array parameter (must be last)
 #define OPTIONS(...) \
-ArgOption _OPTIONS[] = { __VA_ARGS__ __VA_OPT__(,) { NULL, ' ', "", NULL } }
+ArgOption _OPTIONS[] = { __VA_ARGS__ __VA_OPT__(,) END_OPTION }
+
+#ifndef VERSION_MAJOR
+#define VERSION_MAJOR 0
+#endif
+#ifndef VERSION_MINOR
+#define VERSION_MINOR 0
+#endif
+
+static int _VERSION_MAJOR = VERSION_MAJOR;
+static int _VERSION_MINOR = VERSION_MINOR;
+
+OBJECT (int, char*[], void*)
+  void      *env;
+  int        program_major;
+  int        program_minor;
+  String    *program_name;
+  Map       *parameters;
+END_OBJECT;
 
 typedef enum arg_type {
   ARG_TYPE_CHARPTR,
   ARG_TYPE_INTEGER,
   ARG_TYPE_DECIMAL,
-  ARG_TYPE_BOOLEAN
+  ARG_TYPE_BOOLEAN,
+  ARG_TYPE_ANY,
+  ARG_TYPE_NONE
 } ArgType;
 
 typedef union arg_value {
@@ -34,27 +60,15 @@ typedef struct arg_option {
   const char  *name;
   char         ident;
   const char  *desc;
-  const void (*callback)(Args*);
+  ArgType      type;
+  const void (*callback)(Args*, ArgValue);
 } ArgOption;
 
-OBJECT (int, char*[], void*)
-  void      *env;
-  char      *program_name;
-  Map       *parameters;
-  Array     *positionals;
-END_OBJECT;
-
 extern ArgOption _OPTIONS[];
-extern int       _VERSION_MAJOR;
-extern int       _VERSION_MINOR;
 
-long long   _(cint)(char c)        ALIAS (cint);
-long long   _(sint)(const char *s) ALIAS (sint);
-double      _(cdec)(char c)        ALIAS (cdec);
-double      _(sdec)(const char *s) ALIAS (sdec);
-const char *_(cstr)(char c)        ALIAS (cstr);
-const char *_(sstr)(const char *s) ALIAS (sstr);
-
+ArgValue  _(index)(int index);
+ArgValue  _(name)(const char *name);
+Array    *_(list)();
 
 #undef TYPENAME
 #endif
