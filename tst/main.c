@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 {
   Args *args = NEW (Args) (argc, argv, NULL);
 
-  Args_cint(args, 'c');
+  
 
   DELETE (args);
 }

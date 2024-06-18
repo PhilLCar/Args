@@ -12,8 +12,8 @@ ArgOption _DEFAULT_OPTIONS[] = {
 
 /******************************************************************************/
 int _sizeof_options() {
-  int       size = 0;
   ArgOption end  = END_OPTION;
+  int       size = 0;
 
   do
   {
@@ -32,42 +32,82 @@ int _sizeof_options() {
 }
 
 /******************************************************************************/
-int _param_start(int size) {
-  int start;
+int _param_start() {
+  ArgOption end   = END_OPTION;
+  int       start = 0;
 
-  for (start = 0; start < size; start++)
+  do
   {
-    char o = _OPTIONS[start].ident;
+    ArgOption *option = &_OPTIONS[start];
+    char       o      = option->ident;
 
-    if (o == '+' || o == '-' || o == '*' || o == ' ')
+    if (o == '+' || o == '-' || o == '*' || o == end.ident)
     {
       break;
     }
-  }
+  } while (++start);
   
   return start;
 }
 
 /******************************************************************************/
 void _default_help(Args *args, ArgValue value) {
-  Coordinate size = gettermsize();
+  //Coordinate size = gettermsize();
   
   int opt_size = _sizeof_options();
-  int def_size = sizeof(_DEFAULT_OPTIONS) / sizeof(ArgOption);
+  //int def_size = sizeof(_DEFAULT_OPTIONS) / sizeof(ArgOption);
 
   int max_name = 0;
-  int max_desc = 0;
 
   for (int i = 0; i < opt_size; i++) {
-    
+    int len = strlen(_OPTIONS[i].name) + 2;
+
+    if (len > max_name)
+    {
+      max_name = len;
+    }
   }
+
+  printf("USAGE:\n");
+  printf("\t%s [OPTIONS]", args->program_name->base);
+
+  for (int i = _param_start(), start = i; i < opt_size; i++)
+  {
+    ArgOption *option = &_OPTIONS[i];
+
+    if (!option->name[0])
+    {
+      printf(" param%d", i - start);
+    }
+    else if (option->ident == '+')
+    {
+      printf(" %s", option->name);
+    }
+    else if (option->ident == '-')
+    {
+      printf(" [%s]", option->name);
+    }
+    else if (option->ident == '*')
+    {
+      printf(" %s...", option->name);
+    }
+    else
+    {
+      fprintf(stderr, "Badly formed parameter: '%s'\nOnly '+', '-', '*' are allowed.\n", option->name);
+      break;
+    }
+  }
+
+  printf("\nOPTIONS:\n");
+
+  printf("PARAMETERS:\n");
 
   exit(0);
 }
 
 /******************************************************************************/
 void _default_version(Args *args, ArgValue value) {
-  printf("Program: %s\n Version: %d.%d\n", args->program_name, args->program_major, args->program_minor);
+  printf("Program: %s\n Version: %d.%d\n", args->program_name->base, args->program_major, args->program_minor);
   exit(0);
 }
 
@@ -90,7 +130,7 @@ ArgValue _parse_option(ArgOption *option, const char *parameter)
       value.as_decimal = atof(parameter);
       break;
     case ARG_TYPE_BOOLEAN:
-      value.as_integer = !strcmp('true', parameter);
+      value.as_integer = !strcmp("true", parameter);
       break;
     case ARG_TYPE_NONE:
     default:
@@ -108,12 +148,49 @@ void _(parameter)(int* index, const char *value)
 
   if (parameter->ident != ' ' && parameter->ident != '*')
   {
-    *index++;
+    (*index)++;
   }
 
   Map_setkey(_this->parameters, NEW (String) (parameter->name), NEW (String) (value));
 }
 
+/******************************************************************************/
+ArgOption* _(option)(char ident)
+{
+  ArgOption  last  = END_OPTION;
+  ArgOption *found = NULL;
+
+  int n_default = sizeof(_DEFAULT_OPTIONS) / sizeof(ArgOption);
+
+  for (int i = 0; _OPTIONS[i].ident != last.ident; i++)
+  {
+    if (_OPTIONS[i].ident == ident)
+    {
+      found = &_OPTIONS[i];
+      break;
+    }
+  }
+
+  if (!found)
+  {
+    for (int i = 0; i < n_default; i++)
+    {
+      if (_DEFAULT_OPTIONS[i].ident == ident)
+      {
+        found = &_DEFAULT_OPTIONS[i];
+        break;
+      }
+    }
+  }
+
+  return found;
+}
+
+/******************************************************************************/
+void _(optcall)(ArgOption *option, const char *param)
+{
+  option->callback(_this, _parse_option(option, param));
+}
 
 /******************************************************************************/
 ArgOption* _(loption)(const char *name)
@@ -121,12 +198,26 @@ ArgOption* _(loption)(const char *name)
   ArgOption  last  = END_OPTION;
   ArgOption *found = NULL;
 
-  for (int i = 0; i < _OPTIONS[i].ident != last.ident; i++)
+  int n_default = sizeof(_DEFAULT_OPTIONS) / sizeof(ArgOption);
+
+  for (int i = 0; _OPTIONS[i].ident != last.ident; i++)
   {
     if (!strcmp(_OPTIONS[i].name, name))
     {
       found = &_OPTIONS[i];
       break;
+    }
+  }
+
+  if (!found)
+  {
+    for (int i = 0; i < n_default; i++)
+    {
+      if (!strcmp(_DEFAULT_OPTIONS[i].name, name))
+      {
+        found = &_DEFAULT_OPTIONS[i];
+        break;
+      }
     }
   }
 
@@ -136,8 +227,8 @@ ArgOption* _(loption)(const char *name)
 /******************************************************************************/
 void _(loptcall)(const char *option)
 {
-  char *param = strstr(option, "=");
-  char *name  = option;
+  const char *param = strstr(option, "=");
+  const char *name  = option;
 
   char  buffer[256];
 
@@ -158,35 +249,12 @@ void _(loptcall)(const char *option)
   }
 }
 
-/******************************************************************************/
-ArgOption* _(option)(char ident)
-{
-  ArgOption  last  = END_OPTION;
-  ArgOption *found = NULL;
-
-  for (int i = 0; i < _OPTIONS[i].ident != last.ident; i++)
-  {
-    if (_OPTIONS[i].ident == ident)
-    {
-      found = &_OPTIONS[i];
-      break;
-    }
-  }
-
-  return found;
-}
-
-/******************************************************************************/
-void _(optcall)(ArgOption *option, const char *param)
-{
-  option->callback(_this, _parse_option(option, param));
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 TYPENAME *_(cons)(int argc, char *argv[], void *env)
 {
   if (_this) {
-    int  param_mode = 0;
+    int  param_start = _param_start();
+    int  param_mode  = 0;
     char buffer[256];
 
     filenamewopath(buffer, argv[0]);
@@ -195,19 +263,14 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
     _this->program_major = _VERSION_MAJOR;
     _this->program_minor = _VERSION_MINOR;
     _this->program_name  = NEW (String) (buffer);
-    _this->parameters    = NEW (Map)    (sizeof(String), sizeof(String), String_equals);
-
-    int n_options = _sizeof_options();
-    int n_default = sizeof(_DEFAULT_OPTIONS) / sizeof(ArgOption);
-
-    int param_start = _param_start(n_options);
+    _this->parameters    = NEW (Map)    (sizeof(String), sizeof(String), (Comparer)String_equals);
 
     for (int i = 1; i < argc; i++)
     {
       char *arg = argv[i];
 
       // Ignore empty argument
-      if (arg[0] == '\0') continue;
+      if (!arg[0]) continue;
 
       if (param_mode || arg[0] != '-')
       {
@@ -218,7 +281,7 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
       }
       else if (arg[1] == '-')
       {
-        if (arg[2] == '\0')
+        if (!arg[2])
         {
         // Option end marker, everything after is a parameter
           param_mode = 1;
@@ -231,7 +294,7 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
       } else {
 
         // Normal option
-        for (int j = 1; arg[j] != '\0'; j++)
+        for (int j = 1; arg[j]; j++)
         {
           ArgOption* option = Args_option(_this, arg[j]);
 
@@ -239,24 +302,24 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
           {
             if (option->type == ARG_TYPE_NONE)
             {
-              Args_callopt(_this, option, NULL);
+              Args_optcall(_this, option, NULL);
             }
-            else if (arg[j + 1] == '\0')
+            else if (!arg[j + 1])
             {
               // Split param option
-              Args_callopt(_this, option, argv[++i]);
+              Args_optcall(_this, option, argv[++i]);
               break;
             }
             else
             {
               // Contiguous param option
-              Args_callopt(_this, option, &arg[++j]);
+              Args_optcall(_this, option, &arg[++j]);
               break;
             }
           }
           else
           {
-            fprintf(stderr, "Unreckognized option '%c'\n", arg[j]);
+            fprintf(stderr, "Unreckognized option '%c'.\n", arg[j]);
             
             exit(0);
           }
@@ -287,7 +350,7 @@ ArgValue _(index)(int index)
 ////////////////////////////////////////////////////////////////////////////////
 ArgValue _(name)(const char* name)
 {
-  Pair      *pair   = Map_atkey(_this->parameters, name);
+  Pair      *pair   = Map_atkey(_this->parameters, (void*)name);
   ArgOption *option = Args_loption(_this, *(char**)pair->first);
 
   return _parse_option(option, *(char**)pair->second);
