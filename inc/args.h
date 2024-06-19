@@ -15,7 +15,7 @@
 
 #define TYPENAME Args
 
-#define END_OPTION { NULL, ' ', "", ARG_TYPE_NONE, NULL }
+#define END_OPTION { NULL, '\0', NULL, ARG_TYPE_NONE, NULL }
 
 // '+' Required parameter
 // '-' Optional paramters (must be last)
@@ -30,8 +30,8 @@ ArgOption _OPTIONS[] = { __VA_ARGS__ __VA_OPT__(,) END_OPTION }
 #define VERSION_MINOR 0
 #endif
 
-static int _VERSION_MAJOR = VERSION_MAJOR;
-static int _VERSION_MINOR = VERSION_MINOR;
+__attribute__((unused)) static int _VERSION_MAJOR = VERSION_MAJOR;
+__attribute__((unused)) static int _VERSION_MINOR = VERSION_MINOR;
 
 OBJECT (int, char*[], void*)
   void      *env;
