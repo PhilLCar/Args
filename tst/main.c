@@ -8,7 +8,7 @@
 OPTIONS(
   { "option", 'o', "Specify an option (between 1 and 10)", ARG_TYPE_INTEGER, NULL },
   { "name"  , 'n', "Does the program have a name?"       , ARG_TYPE_CHARPTR, NULL },
-  { ""      , '+', "If name, specify here"               , ARG_TYPE_CHARPTR, NULL },
+  { "test"  , '+', "If name, specify here"               , ARG_TYPE_CHARPTR, NULL },
   { ""      , '-', "Optional"                            , ARG_TYPE_ANY,     NULL }
 );
 

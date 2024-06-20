@@ -40,11 +40,8 @@ int _param_start()
 }
 
 /******************************************************************************/
-void _print_option(ArgOption *option, int padding)
+char *_expects(ArgOption *option)
 {
-  char buffer[256];
-  char name[256];
-  char ident[256];
   char *expects;
 
   switch (option->type) {
@@ -53,9 +50,35 @@ void _print_option(ArgOption *option, int padding)
     case ARG_TYPE_DECIMAL: expects = "decimal"; break;
     case ARG_TYPE_BOOLEAN: expects = "boolean"; break;
     case ARG_TYPE_ANY:     expects = "any    "; break;
+    default:
     case ARG_TYPE_NONE:    expects = "       "; break;
-    default: return;
   }
+
+  return expects;
+}
+
+/******************************************************************************/
+char *_ptype(ArgOption *option)
+{
+  char *ptype;
+
+  switch (option->ident) {
+    case '-': ptype = "optional  "; break;
+    case '*': ptype = "multiple  "; break;
+    default:
+    case '+': ptype = "mandatory "; break;
+  }
+
+  return ptype;
+}
+
+/******************************************************************************/
+void _print_option(ArgOption *option, int padding)
+{
+  char  buffer[256];
+  char  name[256];
+  char  ident[256];
+  char *expects = _expects(option);
 
   sprintf(buffer, "--%s", option->name);
 
@@ -69,6 +92,18 @@ void _print_option(ArgOption *option, int padding)
 }
 
 /******************************************************************************/
+void _print_parameter(ArgOption *option, int padding)
+{
+  char  name[256];
+  char *type    = _ptype(option);
+  char *expects = _expects(option);
+
+  ljust(option->name, name, padding);
+
+  printf("\t%s %s %s %s\n", name, type, expects, option->desc);
+}
+
+/******************************************************************************/
 void _default_help(Args *args, ArgValue value)
 {
   int opt_size = _sizeof_options();
@@ -76,6 +111,9 @@ void _default_help(Args *args, ArgValue value)
   int p_start  = _param_start();
 
   int max_name = 11;
+
+  ArgOption *params = malloc((opt_size - p_start) * sizeof(ArgOption));
+  char       pnames[1024];
 
   for (int i = 0; i < opt_size; i++) {
     int len = strlen(_OPTIONS[i].name) + 2;
@@ -92,25 +130,27 @@ void _default_help(Args *args, ArgValue value)
   printf("USAGE:\n");
   printf("\t%s [OPTIONS]", args->program_name->base);
 
-  for (int i = p_start; i < opt_size; i++)
+  for (int i = p_start, j = 0; i < opt_size; i++, j++)
   {
-    ArgOption  *option = &_OPTIONS[i];
-    const char *name   = option->name;
-    char        buffer[256];
+    ArgOption *opt;
 
-    if (!option->name[0])
+    params[j] = _OPTIONS[i];
+
+    opt = &params[j];
+
+    if (!opt->name[0])
     {
-      name = buffer;
-      sprintf(buffer, "param%d", i - p_start);
+      opt->name = &pnames[j << 5];
+      sprintf((char*)opt->name, "param%d", j);
     }
 
-    switch (option->ident)
+    switch (opt->ident)
     {
-      case '+': printf(" %s",    name); break;
-      case '-': printf(" [%s]",  name); break;
-      case '*': printf(" %s...", name); break;
+      case '+': printf(" %s",    opt->name); break;
+      case '-': printf(" [%s]",  opt->name); break;
+      case '*': printf(" %s...", opt->name); break;
       default:
-        fprintf(stderr, "Badly formed parameter: '%s'\nOnly '+', '-', '*' are allowed.\n", name);
+        fprintf(stderr, "Badly formed parameter: '%s'\nOnly '+', '-', '*' are allowed.\n", opt->name);
         exit(1);
     }
   }
@@ -145,6 +185,21 @@ void _default_help(Args *args, ArgValue value)
 
   printf("PARAMETERS:\n");
 
+  {
+    char buffer[256];
+
+    ljust("Position ", buffer, max_name - 2);
+    printf("\t%s %-10s %s %s\n", buffer, "Type", "Expects", "Description");
+    ljust("======== ", buffer, max_name - 2);
+    printf("\t%s %-10s %s %s\n", buffer, "====", "=======", "===========");
+  }
+
+  for (int i = 0; i < opt_size - p_start; i++)
+  {
+    _print_parameter(&params[i], max_name - 2);
+  }
+
+  free(params);
   exit(0);
 }
 
