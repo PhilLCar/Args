@@ -24,7 +24,7 @@ OPTIONS(
   { "option", 'o', "Specify an option (between 1 and 10)", ARG_TYPE_INTEGER, setnum  },
   { "name"  , 'n', "Does the program have a name?"       , ARG_TYPE_CHARPTR, setname },
   { "test"  , '+', "If name, specify here"               , ARG_TYPE_CHARPTR, NULL    },
-  { ""      , '-', "Optional"                            , ARG_TYPE_ANY,     NULL    }
+  { "rest"  , '*', "Optional"                            , ARG_TYPE_INTEGER, NULL    }
 );
 
 int main(int argc, char *argv[])
@@ -44,7 +44,16 @@ int main(int argc, char *argv[])
     printf("Name: %s\n", env.name);
   }
 
-  printf("Test: %s\n", Args_index(args, 0).as_charptr);
+  Array *list = Args_list(args);
+
+  for (int i = 0; i < list->size; i++)
+  {
+    int e = *(int*)Array_at(list, i);
+
+    printf("Index %d: %d\n", i, e);
+  }
+
+  DELETE (list);
 
   DELETE (args);
 
