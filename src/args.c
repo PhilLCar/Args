@@ -332,12 +332,7 @@ void _(loptcall)(const char *option)
     ArgOption *opt = _loption(name);
 
     if (opt) {
-      if (opt->type != ARG_TYPE_NONE && opt->type != ARG_TYPE_ANY && !param) {
-        fprintf(stderr, "Parameter is missing for option '%s'.\n", opt->name);
-        exit(0);
-      } else {
-        Args_optcall(_this, opt, param);
-      }
+      Args_optcall(_this, opt, param);
     } else {
       fprintf(stderr, "Unreckognized option '%s'.\n", option);
       exit(0);
