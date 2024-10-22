@@ -1,6 +1,7 @@
 #ifndef ARGS_H
 #define ARGS_H
 
+// CUT
 #include <array.h>
 #include <map.h>
 #include <oop.h>
@@ -33,13 +34,13 @@ ArgOption _OPTIONS[] = { __VA_ARGS__ __VA_OPT__(,) END_OPTION }
 __attribute__((unused)) static int _VERSION_MAJOR = VERSION_MAJOR;
 __attribute__((unused)) static int _VERSION_MINOR = VERSION_MINOR;
 
-OBJECT (int, char*[], void*)
+OBJECT (int argc, char *argv[], void *envptr)
   void      *env;
   int        program_major;
   int        program_minor;
   String    *program_name;
   Map       *parameters;
-END_OBJECT;
+END(0, NULL, NULL);
 
 typedef enum arg_type {
   ARG_TYPE_CHARPTR,

@@ -126,7 +126,11 @@ ArgValue _parse_option(ArgOption *option, const char *parameter)
       value.as_decimal = atof(parameter);
       break;
     case ARG_TYPE_BOOLEAN:
-      value.as_integer = !strcmp("true", parameter);
+      value.as_integer = !parameter
+        || (strcmp("false", parameter) 
+         && strcmp("False", parameter)
+         && strcmp("FALSE", parameter)
+         && strcmp("0",     parameter));
       break;
     case ARG_TYPE_NONE:
     default:
@@ -311,7 +315,7 @@ void _default_version(Args *args, ArgValue value)
 /******************************************************************************/
 void _(optcall)(ArgOption *option, const char *param)
 {
-  if (option->callback) option->callback(_this, _parse_option(option, param));
+  if (option->callback) option->callback(this, _parse_option(option, param));
 }
 
 /******************************************************************************/
@@ -332,7 +336,7 @@ void _(loptcall)(const char *option)
     ArgOption *opt = _loption(name);
 
     if (opt) {
-      Args_optcall(_this, opt, param);
+      Args_optcall(this, opt, param);
     } else {
       fprintf(stderr, "Unreckognized option '%s'.\n", option);
       exit(0);
@@ -347,14 +351,14 @@ void _(pcall)(int* index, const char *value)
 
   if (parameter->ident != ' ' && parameter->ident != '*') (*index)++;
 
-  Map_setkey(_this->parameters, NEW (String) (parameter->name), NEW (String) (value));
-  Args_optcall(_this, parameter, value);
+  Map_setkey(this->parameters, NEW (String) (parameter->name), NEW (String) (value));
+  Args_optcall(this, parameter, value);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 TYPENAME *_(cons)(int argc, char *argv[], void *env)
 {
-  if (_this) {
+  if (this) {
     int  param_start = _param_start();
     int  param_mode  = 0;
     char buffer[256];
@@ -362,11 +366,11 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
     filenamewopath(buffer, argv[0]);
     filenamewoext (buffer, buffer);
 
-    _this->env           = env;
-    _this->program_major = _VERSION_MAJOR;
-    _this->program_minor = _VERSION_MINOR;
-    _this->program_name  = NEW (String) (buffer);
-    _this->parameters    = NEW (Map)    (sizeof(String), sizeof(String), (Comparer)String_cequals);
+    this->env           = env;
+    this->program_major = _VERSION_MAJOR;
+    this->program_minor = _VERSION_MINOR;
+    this->program_name  = NEW (String) (buffer);
+    this->parameters    = NEW (Map)    (OBJECT_TYPE(String), OBJECT_TYPE(String), (Comparer)String_cmp);
 
     for (int i = 1; i < argc; i++) {
       char *arg = argv[i];
@@ -376,7 +380,7 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
 
       // TODO: Remove param mode
       if (param_mode || arg[0] != '-') {        
-        Args_pcall(_this, &param_start, arg);
+        Args_pcall(this, &param_start, arg);
       }
       else if (arg[1] == '-') {
         if (!arg[2]) {
@@ -384,7 +388,7 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
           param_mode = 1;
         } else {
           // Long option
-          Args_loptcall(_this, &arg[2]);
+          Args_loptcall(this, &arg[2]);
         }
       } else {
         // Normal option
@@ -393,10 +397,10 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
 
           if (option) {
             if (option->type == ARG_TYPE_NONE) {
-              Args_optcall(_this, option, NULL);
+              Args_optcall(this, option, NULL);
             } else if (!arg[j + 1]) {
               // Split param option
-              if (++i < argc) Args_optcall(_this, option, argv[i]);
+              if (++i < argc) Args_optcall(this, option, argv[i]);
               else {
                 fprintf(stderr, "Parameter is missing for option '%c'.\n", arg[j]);
                 exit(0);
@@ -404,7 +408,7 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
               break;
             } else {
               // Contiguous param option
-              Args_optcall(_this, option, &arg[++j]);
+              Args_optcall(this, option, &arg[++j]);
               break;
             }
           } else {
@@ -416,26 +420,26 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
     }
   }
 
-  return _this;
+  return this;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void _(free)()
 {
-  DELETE (_this->program_name);
-  DELETE (_this->parameters);
+  DELETE (this->program_name);
+  DELETE (this->parameters);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ArgValue _(index)(int index)
 {
   ArgValue  value = { .as_charptr = NULL };
-  Pair     *pair  = Array_at((Array*)_this->parameters, index);
+  Pair     *pair  = Array_at((Array*)this->parameters, index);
 
   if (pair) {
-    ArgOption *param = _parameter(*(char**)pair->first);
+    ArgOption *param = _parameter(Pair_fptr(pair));
 
-    if (param) value = _parse_option(param, *(char**)pair->second);
+    if (param) value = _parse_option(param, Pair_sptr(pair));
   }
 
   return value;
@@ -445,12 +449,12 @@ ArgValue _(index)(int index)
 ArgValue _(name)(const char* name)
 {
   ArgValue  value = { .as_charptr = NULL };
-  Pair     *pair  = Map_atkey(_this->parameters, name);
+  Pair     *pair  = Map_atkey(this->parameters, name);
 
   if (pair) {
-    ArgOption *param = _parameter(*(char**)pair->first);
+    ArgOption *param = _parameter(Pair_fptr(pair));
 
-    if (param) value = _parse_option(param, *(char**)pair->second);
+    if (param) value = _parse_option(param, Pair_sptr(pair));
   }
 
   return value;
@@ -466,15 +470,15 @@ Array* _(list)()
     ArgOption *option = &_OPTIONS[n_options - 1];
 
     if (option->ident == '*') {
-      Array *params = (Array*)_this->parameters;
+      Array *params = (Array*)this->parameters;
       
       list = NEW (Array) (sizeof(ArgValue));
 
       for (int i = 0; i < params->size; i++) {
         Pair *pair = (Pair*)Array_at(params, i);
 
-        if (!strcmp(option->name, *(char**)pair->first)) {
-          ArgValue value = _parse_option(option, *(char**)pair->second);
+        if (!strcmp(option->name, Pair_fptr(pair))) {
+          ArgValue value = _parse_option(option, Pair_sptr(pair));
 
           Array_push(list, &value);
         }
