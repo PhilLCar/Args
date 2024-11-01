@@ -2,16 +2,16 @@
 
 #define TYPENAME Args
 
-void _default_help(Args*, ArgValue);
-void _default_version(Args*, ArgValue);
+void _(help)(ArgValue);
+void _(version)(ArgValue);
 
 ArgOption _DEFAULT_OPTIONS[] = {
-  { "help"   , 'h', "Displays this message"       , ARG_TYPE_NONE, _default_help    },
-  { "version", 'v', "Displays the program version", ARG_TYPE_NONE, _default_version }
+  { "help"   , 'h', "Displays this message"       , ARG_TYPE_NONE, Args_help    },
+  { "version", 'v', "Displays the program version", ARG_TYPE_NONE, Args_version }
 };
 
 /******************************************************************************/
-int _sizeof_options()
+int STATIC (sizeof_options)()
 {
   int size = 0;
 
@@ -25,7 +25,7 @@ int _sizeof_options()
 }
 
 /******************************************************************************/
-int _param_start()
+int STATIC (param_start)()
 {
   int start = 0;
 
@@ -40,11 +40,11 @@ int _param_start()
 }
 
 /******************************************************************************/
-ArgOption *_option(const char ident)
+ArgOption *STATIC (option)(const char ident)
 {
   ArgOption *found = NULL;
 
-  int n_options = _param_start();
+  int n_options = Args_param_start();
   int n_default = sizeof(_DEFAULT_OPTIONS) / sizeof(ArgOption);
 
   for (int i = 0; i < n_options; i++) {
@@ -67,11 +67,11 @@ ArgOption *_option(const char ident)
 }
 
 /******************************************************************************/
-ArgOption *_loption(const char *name)
+ArgOption *STATIC (loption)(const char *name)
 {
   ArgOption *found = NULL;
 
-  int n_options = _param_start();
+  int n_options = Args_param_start();
   int n_default = sizeof(_DEFAULT_OPTIONS) / sizeof(ArgOption);
 
   for (int i = 0; i < n_options; i++) {
@@ -94,11 +94,11 @@ ArgOption *_loption(const char *name)
 }
 
 /******************************************************************************/
-ArgOption *_parameter(const char *name)
+ArgOption *STATIC (parameter)(const char *name)
 {
   ArgOption *found = NULL;
 
-  for (int i = _param_start(); _OPTIONS[i].ident; i++) {
+  for (int i = Args_param_start(); _OPTIONS[i].ident; i++) {
     if (!strcmp(_OPTIONS[i].name, name)) {
         found = &_OPTIONS[i];
         break;
@@ -109,7 +109,7 @@ ArgOption *_parameter(const char *name)
 }
 
 /******************************************************************************/
-ArgValue _parse_option(ArgOption *option, const char *parameter)
+ArgValue STATIC (parse_option)(ArgOption *option, const char *parameter)
 {
   ArgValue value;
 
@@ -142,7 +142,7 @@ ArgValue _parse_option(ArgOption *option, const char *parameter)
 }
 
 /******************************************************************************/
-char *_expects(ArgOption *option)
+char *STATIC (expects)(ArgOption *option)
 {
   char *expects;
 
@@ -160,7 +160,7 @@ char *_expects(ArgOption *option)
 }
 
 /******************************************************************************/
-char *_ptype(ArgOption *option)
+char *STATIC (ptype)(ArgOption *option)
 {
   char *ptype;
 
@@ -175,12 +175,12 @@ char *_ptype(ArgOption *option)
 }
 
 /******************************************************************************/
-void _print_option(ArgOption *option, int padding)
+void STATIC (print_option)(ArgOption *option, int padding)
 {
   char  buffer[256];
   char  name[256];
   char  ident[256];
-  char *expects = _expects(option);
+  char *expects = Args_expects(option);
 
   sprintf(buffer, "--%s", option->name);
 
@@ -194,11 +194,11 @@ void _print_option(ArgOption *option, int padding)
 }
 
 /******************************************************************************/
-void _print_parameter(ArgOption *option, int padding)
+void STATIC (print_parameter)(ArgOption *option, int padding)
 {
   char  name[256];
-  char *type    = _ptype(option);
-  char *expects = _expects(option);
+  char *type    = Args_ptype(option);
+  char *expects = Args_expects(option);
 
   ljust(option->name, name, padding);
 
@@ -206,11 +206,11 @@ void _print_parameter(ArgOption *option, int padding)
 }
 
 /******************************************************************************/
-void _default_help(Args *args, ArgValue value)
+void _(help)(ArgValue value)
 {
-  int opt_size = _sizeof_options();
+  int opt_size = Args_sizeof_options();
   int def_size = sizeof(_DEFAULT_OPTIONS) / sizeof(ArgOption);
-  int p_start  = _param_start();
+  int p_start  = Args_param_start();
 
   int max_name = 11;
 
@@ -230,7 +230,7 @@ void _default_help(Args *args, ArgValue value)
   }
 
   printf("USAGE:\n");
-  printf("\t%s [OPTIONS]", args->program_name->base);
+  printf("\t%s [OPTIONS]", this->program_name->base);
 
   for (int i = p_start, j = 0; i < opt_size; i++, j++)
   {
@@ -268,7 +268,7 @@ void _default_help(Args *args, ArgValue value)
     printf("\t%s %s %s %s\n", buffer, "=====", "=======", "===========");
   }
 
-  for (int i = 0; i < p_start; i++) _print_option(&_OPTIONS[i], max_name);
+  for (int i = 0; i < p_start; i++) Args_print_option(&_OPTIONS[i], max_name);
 
   for (int i = 0; i < def_size; i++)
   {
@@ -282,7 +282,7 @@ void _default_help(Args *args, ArgValue value)
       if (!strcmp(option->name, defopt.name)) defopt.name  = "";
     }
 
-    if (defopt.ident != ' ' || defopt.name[0] != '\0') _print_option(&defopt, max_name);
+    if (defopt.ident != ' ' || defopt.name[0] != '\0') Args_print_option(&defopt, max_name);
   }
 
   printf("PARAMETERS:\n");
@@ -298,7 +298,7 @@ void _default_help(Args *args, ArgValue value)
 
   for (int i = 0; i < opt_size - p_start; i++)
   {
-    _print_parameter(&params[i], max_name - 2);
+    Args_print_parameter(&params[i], max_name - 2);
   }
 
   free(params);
@@ -306,16 +306,16 @@ void _default_help(Args *args, ArgValue value)
 }
 
 /******************************************************************************/
-void _default_version(Args *args, ArgValue value)
+void _(version)(ArgValue value)
 {
-  printf("Program: %s\nVersion: %d.%d\n", args->program_name->base, args->program_major, args->program_minor);
+  printf("Program: %s\nVersion: %d.%d\n", this->program_name->base, this->program_major, this->program_minor);
   exit(0);
 }
 
 /******************************************************************************/
 void _(optcall)(ArgOption *option, const char *param)
 {
-  if (option->callback) option->callback(this, _parse_option(option, param));
+  if (option->callback) option->callback(this, Args_parse_option(option, param));
 }
 
 /******************************************************************************/
@@ -333,7 +333,7 @@ void _(loptcall)(const char *option)
   }
 
   {
-    ArgOption *opt = _loption(name);
+    ArgOption *opt = Args_loption(name);
 
     if (opt) {
       Args_optcall(this, opt, param);
@@ -351,26 +351,26 @@ void _(pcall)(int* index, const char *value)
 
   if (parameter->ident != ' ' && parameter->ident != '*') (*index)++;
 
-  Map_setkey(this->parameters, NEW (String) (parameter->name), NEW (String) (value));
+  Map_Set(this->parameters, NEW (String) (parameter->name), NEW (String) (value));
   Args_optcall(this, parameter, value);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-TYPENAME *_(cons)(int argc, char *argv[], void *env)
+TYPENAME *_(Construct)(int argc, char *argv[], void *env)
 {
   if (this) {
-    int  param_start = _param_start();
+    int  param_start = Args_param_start();
     int  param_mode  = 0;
     char buffer[256];
 
     filenamewopath(buffer, argv[0]);
     filenamewoext (buffer, buffer);
 
-    this->env           = env;
+    this->base           = env;
     this->program_major = _VERSION_MAJOR;
     this->program_minor = _VERSION_MINOR;
     this->program_name  = NEW (String) (buffer);
-    this->parameters    = NEW (Map)    (OBJECT_TYPE(String), OBJECT_TYPE(String), (Comparer)String_cmp);
+    this->parameters    = NEW (Map)    (OBJECT_TYPE(String), OBJECT_TYPE(String), (Comparer)String_Cmp);
 
     for (int i = 1; i < argc; i++) {
       char *arg = argv[i];
@@ -393,7 +393,7 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
       } else {
         // Normal option
         for (int j = 1; arg[j]; j++) {
-          ArgOption* option = _option(arg[j]);
+          ArgOption* option = Args_option(arg[j]);
 
           if (option) {
             if (option->type == ARG_TYPE_NONE) {
@@ -418,53 +418,58 @@ TYPENAME *_(cons)(int argc, char *argv[], void *env)
         }
       }
     }
+  } else {
+    THROW(NEW (MemoryAllocationException)());
   }
 
   return this;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void _(free)()
+void _(Destruct)()
 {
-  DELETE (this->program_name);
-  DELETE (this->parameters);
+  if (this)
+  {
+    DELETE (this->program_name);
+    DELETE (this->parameters);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-ArgValue _(index)(int index)
+ArgValue _(Index)(int index)
 {
   ArgValue  value = { .as_charptr = NULL };
-  Pair     *pair  = Array_at((Array*)this->parameters, index);
+  Pair     *pair  = Array_At((Array*)this->parameters, index);
 
   if (pair) {
-    ArgOption *param = _parameter(Pair_fptr(pair));
+    ArgOption *param = Args_parameter(Pair_DerefF(pair));
 
-    if (param) value = _parse_option(param, Pair_sptr(pair));
+    if (param) value = Args_parse_option(param, Pair_DerefS(pair));
   }
 
   return value;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-ArgValue _(name)(const char* name)
+ArgValue _(Name)(const char* name)
 {
   ArgValue  value = { .as_charptr = NULL };
-  Pair     *pair  = Map_atkey(this->parameters, name);
+  Pair     *pair  = Map_At(this->parameters, name);
 
   if (pair) {
-    ArgOption *param = _parameter(Pair_fptr(pair));
+    ArgOption *param = Args_parameter(Pair_DerefF(pair));
 
-    if (param) value = _parse_option(param, Pair_sptr(pair));
+    if (param) value = Args_parse_option(param, Pair_DerefS(pair));
   }
 
   return value;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-Array* _(list)()
+Array* _(List)()
 {
   Array *list      = NULL;
-  int    n_options = _sizeof_options();
+  int    n_options = Args_sizeof_options();
 
   if (n_options > 0) {
     ArgOption *option = &_OPTIONS[n_options - 1];
@@ -475,12 +480,12 @@ Array* _(list)()
       list = NEW (Array) (sizeof(ArgValue));
 
       for (int i = 0; i < params->size; i++) {
-        Pair *pair = (Pair*)Array_at(params, i);
+        Pair *pair = (Pair*)Array_At(params, i);
 
-        if (!strcmp(option->name, Pair_fptr(pair))) {
-          ArgValue value = _parse_option(option, Pair_sptr(pair));
+        if (!strcmp(option->name, Pair_DerefF(pair))) {
+          ArgValue value = Args_parse_option(option, Pair_DerefS(pair));
 
-          Array_push(list, &value);
+          Array_Push(list, &value);
         }
       }
     }

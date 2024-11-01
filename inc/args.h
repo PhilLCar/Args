@@ -9,6 +9,7 @@
 #include <str.h>
 #include <file.h>
 #include <terminal.h>
+#include <exception.h>
 
 /* GNU/POSIX compliant argument parsing utility for CUT
  * https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html
@@ -34,13 +35,12 @@ ArgOption _OPTIONS[] = { __VA_ARGS__ __VA_OPT__(,) END_OPTION }
 __attribute__((unused)) static int _VERSION_MAJOR = VERSION_MAJOR;
 __attribute__((unused)) static int _VERSION_MINOR = VERSION_MINOR;
 
-OBJECT (int argc, char *argv[], void *envptr)
-  void      *env;
+OBJECT (int argc, char *argv[], void *envptr) BASED (void*)
   int        program_major;
   int        program_minor;
   String    *program_name;
   Map       *parameters;
-END(0, NULL, NULL);
+END_OBJECT(0, NULL, NULL);
 
 typedef enum arg_type {
   ARG_TYPE_CHARPTR,
@@ -67,9 +67,9 @@ typedef struct arg_option {
 
 extern ArgOption _OPTIONS[];
 
-ArgValue  _(index)(int index);
-ArgValue  _(name)(const char *name);
-Array    *_(list)();
+ArgValue  _(Index)(int index);
+ArgValue  _(Name)(const char *name);
+Array    *_(List)();
 
 #undef TYPENAME
 #endif

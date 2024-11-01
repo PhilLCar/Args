@@ -8,14 +8,14 @@ typedef struct _env {
 
 void setnum(Args *args, ArgValue value)
 {
-  Env *env = args->env;
+  Env *env = args->base;
 
   env->num = value.as_integer;
 }
 
 void setname(Args *args, ArgValue value)
 {
-  Env *env = args->env;
+  Env *env = args->base;
 
   env->name = value.as_charptr;
 }
@@ -44,11 +44,11 @@ int main(int argc, char *argv[])
     printf("Name: %s\n", env.name);
   }
 
-  Array *list = Args_list(args);
+  Array *list = Args_List(args);
 
   for (int i = 0; i < list->size; i++)
   {
-    int e = *(int*)Array_at(list, i);
+    int e = *(int*)Array_At(list, i);
 
     printf("Index %d: %d\n", i, e);
   }
