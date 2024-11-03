@@ -252,8 +252,7 @@ void _(help)(ArgValue value)
       case '-': printf(" [%s]",  opt->name); break;
       case '*': printf(" %s...", opt->name); break;
       default:
-        fprintf(stderr, "Badly formed parameter: '%s'\nOnly '+', '-', '*' are allowed.\n", opt->name);
-        exit(1);
+        THROW(NEW (Exception)("Badly formed parameter: '%s'\nOnly '+', '-', '*' are allowed.\n", opt->name));
     }
   }
 
@@ -338,8 +337,7 @@ void _(loptcall)(const char *option)
     if (opt) {
       Args_optcall(this, opt, param);
     } else {
-      fprintf(stderr, "Unreckognized option '%s'.\n", option);
-      exit(0);
+      THROW(NEW (Exception)("Unreckognized option '%s'.\n", option));
     }
   }
 }
@@ -402,11 +400,7 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
               // Split param option
               if (++i < argc) Args_optcall(this, option, argv[i]);
               else {
-                char buffer[2048];
-
-                sprintf(buffer, "Parameter is missing for option '%c'.\n", arg[j]);
-                // TODO: Create "ArgException"
-                THROW(NEW (Exception)(buffer));
+                THROW(NEW (Exception)("Parameter is missing for option '%c'.\n", arg[j]));
               }
               break;
             } else {
@@ -415,11 +409,7 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
               break;
             }
           } else {
-            char buffer[2048];
-
-            sprintf(buffer, "Unreckognized option '%c'.\n", arg[j]);
-            // TODO: Create "ArgException"
-            THROW(NEW (Exception)(buffer));
+            THROW(NEW (Exception)("Unreckognized option '%c'.\n", arg[j]));
           }
         }
       }
@@ -431,12 +421,7 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
 
   for (int i = 0; _OPTIONS[i].ident; i++) {
     if (_OPTIONS[i].ident == '+' && !Map_At(this->parameters, _OPTIONS[i].name)) {
-      // TODO: Make exception constructor able to parse format strings to avoid this
-      char buffer[2048];
-
-      sprintf(buffer, "The parameter '%s' is mandatory and wasn't specified", _OPTIONS[i].name);
-
-      THROW(NEW (Exception)(buffer));
+      THROW(NEW (Exception)("The parameter '%s' is mandatory and wasn't specified", _OPTIONS[i].name));
     }
   }
 
