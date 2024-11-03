@@ -402,8 +402,11 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
               // Split param option
               if (++i < argc) Args_optcall(this, option, argv[i]);
               else {
-                fprintf(stderr, "Parameter is missing for option '%c'.\n", arg[j]);
-                exit(0);
+                char buffer[2048];
+
+                sprintf(buffer, "Parameter is missing for option '%c'.\n", arg[j]);
+                // TODO: Create "ArgException"
+                THROW(NEW (Exception)(buffer));
               }
               break;
             } else {
@@ -412,14 +415,29 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
               break;
             }
           } else {
-            fprintf(stderr, "Unreckognized option '%c'.\n", arg[j]);
-            exit(0);
+            char buffer[2048];
+
+            sprintf(buffer, "Unreckognized option '%c'.\n", arg[j]);
+            // TODO: Create "ArgException"
+            THROW(NEW (Exception)(buffer));
           }
         }
       }
     }
   } else {
     THROW(NEW (MemoryAllocationException)());
+  }
+
+
+  for (int i = 0; _OPTIONS[i].ident; i++) {
+    if (_OPTIONS[i].ident == '+' && !Map_At(this->parameters, _OPTIONS[i].name)) {
+      // TODO: Make exception constructor able to parse format strings to avoid this
+      char buffer[2048];
+
+      sprintf(buffer, "The parameter '%s' is mandatory and wasn't specified", _OPTIONS[i].name);
+
+      THROW(NEW (Exception)(buffer));
+    }
   }
 
   return this;
