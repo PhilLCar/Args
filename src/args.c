@@ -358,17 +358,17 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
 {
   if (this) {
     int  param_start = Args_param_start();
-    int  param_mode  = 0;
     char buffer[256];
 
-    filenamewopath(buffer, argv[0]);
-    filenamewoext (buffer, buffer);
+    filenamewopath(argv[0], buffer, sizeof(buffer));
+    filenamewoext (buffer,  buffer, sizeof(buffer));
 
-    this->base           = env;
+    this->base          = env;
+    this->param_mode    = 0;
     this->program_major = _VERSION_MAJOR;
     this->program_minor = _VERSION_MINOR;
     this->program_name  = NEW (String) (buffer);
-    this->parameters    = NEW (Map)    (OBJECT_TYPE(String), OBJECT_TYPE(String), (Comparer)String_Cmp);
+    this->parameters    = NEW (Map)    (TYPEOF (String), TYPEOF (String), (Comparer)String_Cmp);
 
     for (int i = 1; i < argc; i++) {
       char *arg = argv[i];
@@ -377,13 +377,13 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
       if (!arg[0]) continue;
 
       // TODO: Remove param mode
-      if (param_mode || arg[0] != '-') {        
+      if (this->param_mode || arg[0] != '-') {        
         Args_pcall(this, &param_start, arg);
       }
       else if (arg[1] == '-') {
         if (!arg[2]) {
           // Option end marker, everything after is a parameter
-          param_mode = 1;
+          this->param_mode = 1;
         } else {
           // Long option
           Args_loptcall(this, &arg[2]);

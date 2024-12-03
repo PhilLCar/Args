@@ -36,6 +36,7 @@ __attribute__((unused)) static int _VERSION_MAJOR = VERSION_MAJOR;
 __attribute__((unused)) static int _VERSION_MINOR = VERSION_MINOR;
 
 OBJECT (int argc, char *argv[], void *envptr) BASED (void*)
+  int        param_mode;
   int        program_major;
   int        program_minor;
   String    *program_name;
