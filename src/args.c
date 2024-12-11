@@ -394,7 +394,7 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
           ArgOption* option = Args_option(arg[j]);
 
           if (option) {
-            if (option->type == ARG_TYPE_NONE) {
+            if (option->type == ARG_TYPE_NONE || option->type == ARG_TYPE_BOOLEAN) {
               Args_optcall(this, option, NULL);
             } else if (!arg[j + 1]) {
               // Split param option
