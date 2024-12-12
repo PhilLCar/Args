@@ -368,7 +368,7 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
     this->program_major = _VERSION_MAJOR;
     this->program_minor = _VERSION_MINOR;
     this->program_name  = NEW (String) (buffer);
-    this->parameters    = NEW (Map)    (TYPEOF (String), TYPEOF (String), (Comparer)String_Cmp);
+    this->parameters    = NEW (Map)    (TYPEOF (String), TYPEOF (String));
 
     for (int i = 1; i < argc; i++) {
       char *arg = argv[i];
@@ -420,7 +420,7 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
 
 
   for (int i = 0; _OPTIONS[i].ident; i++) {
-    if (_OPTIONS[i].ident == '+' && !Map_At(this->parameters, _OPTIONS[i].name)) {
+    if (_OPTIONS[i].ident == '+' && !Map_AtKey(this->parameters, _OPTIONS[i].name)) {
       THROW(NEW (Exception)("The parameter '%s' is mandatory and wasn't specified", _OPTIONS[i].name));
     }
   }
@@ -445,9 +445,9 @@ ArgValue _(Index)(int index)
   Pair     *pair  = Array_At((Array*)this->parameters, index);
 
   if (pair) {
-    ArgOption *param = Args_parameter(Pair_DerefF(pair));
+    ArgOption *param = Args_parameter(Pair_FDeref(pair));
 
-    if (param) value = Args_parse_option(param, Pair_DerefS(pair));
+    if (param) value = Args_parse_option(param, Pair_SDeref(pair));
   }
 
   return value;
@@ -457,12 +457,12 @@ ArgValue _(Index)(int index)
 ArgValue _(Name)(const char* name)
 {
   ArgValue  value = { .as_charptr = NULL };
-  Pair     *pair  = Map_At(this->parameters, name);
+  Pair     *pair  = Map_AtKey(this->parameters, name);
 
   if (pair) {
-    ArgOption *param = Args_parameter(Pair_DerefF(pair));
+    ArgOption *param = Args_parameter(Pair_FDeref(pair));
 
-    if (param) value = Args_parse_option(param, Pair_DerefS(pair));
+    if (param) value = Args_parse_option(param, Pair_SDeref(pair));
   }
 
   return value;
@@ -485,8 +485,8 @@ Array* _(List)()
       for (int i = 0; i < params->size; i++) {
         Pair *pair = (Pair*)Array_At(params, i);
 
-        if (!strcmp(option->name, Pair_DerefF(pair))) {
-          ArgValue value = Args_parse_option(option, Pair_DerefS(pair));
+        if (!strcmp(option->name, Pair_FDeref(pair))) {
+          ArgValue value = Args_parse_option(option, Pair_SDeref(pair));
 
           Array_Push(list, &value);
         }
