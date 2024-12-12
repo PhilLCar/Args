@@ -35,12 +35,13 @@ ArgOption _OPTIONS[] = { __VA_ARGS__ __VA_OPT__(,) END_OPTION }
 __attribute__((unused)) static int _VERSION_MAJOR = VERSION_MAJOR;
 __attribute__((unused)) static int _VERSION_MINOR = VERSION_MINOR;
 
-OBJECT (int argc, char *argv[], void *envptr) BASED (void*)
-  int        param_mode;
-  int        program_major;
-  int        program_minor;
-  String    *program_name;
-  Map       *parameters;
+OBJECT (int argc, char *argv[], void *envptr) NOBASE
+  void   *env;
+  int     param_mode;
+  int     program_major;
+  int     program_minor;
+  String *program_name;
+  Map    *parameters;
 END_OBJECT(0, NULL, NULL);
 
 typedef enum arg_type {

@@ -8,14 +8,14 @@ typedef struct _env {
 
 void setnum(Args *args, ArgValue value)
 {
-  Env *env = args->base;
+  Env *env = args->env;
 
   env->num = value.as_integer;
 }
 
 void setname(Args *args, ArgValue value)
 {
-  Env *env = args->base;
+  Env *env = args->env;
 
   env->name = value.as_charptr;
 }

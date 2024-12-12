@@ -363,7 +363,7 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
     filenamewopath(argv[0], buffer, sizeof(buffer));
     filenamewoext (buffer,  buffer, sizeof(buffer));
 
-    this->base          = env;
+    this->env           = env;
     this->param_mode    = 0;
     this->program_major = _VERSION_MAJOR;
     this->program_minor = _VERSION_MINOR;
