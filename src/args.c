@@ -360,15 +360,15 @@ TYPENAME *_(Construct)(int argc, char *argv[], void *env)
     int  param_start = Args_param_start();
     char buffer[256];
 
-    filenamewopath(argv[0], buffer, sizeof(buffer));
-    filenamewoext (buffer,  buffer, sizeof(buffer));
+    filenamewopath(argv[0], sizeof(buffer), buffer);
+    filenamewoext (buffer,  sizeof(buffer), buffer);
 
     this->env           = env;
     this->param_mode    = 0;
     this->program_major = _VERSION_MAJOR;
     this->program_minor = _VERSION_MINOR;
     this->program_name  = NEW (String) (buffer);
-    this->parameters    = NEW (Map)    (TYPEOF (String), TYPEOF (String));
+    this->parameters    = NEW (Map)    (TYPEOF (String));
 
     for (int i = 1; i < argc; i++) {
       char *arg = argv[i];
