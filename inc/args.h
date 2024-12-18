@@ -71,7 +71,7 @@ extern ArgOption _OPTIONS[];
 
 ArgValue  _(Index)(int index);
 ArgValue  _(Name)(const char *name);
-Array    *_(List)();
+Array    *_(Params)();
 
 #undef TYPENAME
 #endif

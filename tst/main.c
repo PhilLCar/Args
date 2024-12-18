@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     printf("Name: %s\n", env.name);
   }
 
-  Array *list = Args_List(args);
+  Array *list = Args_Params(args);
 
   for (int i = 0; i < list->size; i++)
   {

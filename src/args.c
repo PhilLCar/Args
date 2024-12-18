@@ -469,31 +469,29 @@ ArgValue _(Name)(const char* name)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-Array* _(List)()
+Array* _(Params)()
 {
-  Array *list      = NULL;
+  Array *array     = NULL;
   int    n_options = Args_sizeof_options();
 
   if (n_options > 0) {
     ArgOption *option = &_OPTIONS[n_options - 1];
 
-    if (option->ident == '*') {
-      Array *params = (Array*)this->parameters;
-      
-      list = NEW (Array) (sizeof(ArgValue));
+    if (option->ident == '*') {      
+      array = NEW (Array) (sizeof(ArgValue));
 
-      for (int i = 0; i < params->size; i++) {
-        Pair *pair = (Pair*)Array_At(params, i);
+      for (List *l = (List*)this->parameters; !List_Empty(l); l = List_Next(l)) {
+        Pair *pair = List_Head(l);
 
         if (!strcmp(option->name, Pair_FDeref(pair))) {
           ArgValue value = Args_parse_option(option, Pair_SDeref(pair));
 
-          Array_Push(list, &value);
+          Array_Push(array, &value);
         }
       }
     }
   }
 
-  return list;
+  return array;
 }
 
