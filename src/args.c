@@ -349,7 +349,16 @@ void _(pcall)(int* index, const char *value)
 
   if (parameter->ident != ' ' && parameter->ident != '*') (*index)++;
 
-  Map_Set(this->parameters, NEW (String) (parameter->name), NEW (String) (value));
+  if (parameter->ident == '*') {
+    List *params = IFNULL(
+      Map_AtKey(this->parameters, parameter->name), 
+      Map_Set(this->parameters, NEW (String)(parameter->name), NEW (List)())->second);
+
+    List_Add(params, NEW (String) (value));
+  } else {
+    Map_Set(this->parameters, NEW (String) (parameter->name), NEW (String) (value));
+  }
+
   Args_optcall(this, parameter, value);
 }
 
@@ -480,14 +489,11 @@ Array* _(Params)()
     if (option->ident == '*') {      
       array = NEW (Array) (sizeof(ArgValue));
 
-      for (List *l = (List*)this->parameters; !List_Empty(l); l = List_Next(l)) {
-        Pair *pair = List_Head(l);
+      for (const List *l = Map_ValueAtKey(this->parameters, option->name); l && !List_Empty(l); l = List_Next(l)) {
+        const char *value  = List_HeadDeref(l);
+        ArgValue    parsed = Args_parse_option(option, value);
 
-        if (!strcmp(option->name, Pair_FDeref(pair))) {
-          ArgValue value = Args_parse_option(option, Pair_SDeref(pair));
-
-          Array_Push(array, &value);
-        }
+        Array_Push(array, &parsed);
       }
     }
   }
